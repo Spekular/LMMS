@@ -1079,11 +1079,15 @@ inline void AutomationEditor::drawCross( QPainter & p )
 	QPoint mouse_pos = mapFromGlobal( QCursor::pos() );
 	int grid_bottom = height() - SCROLLBAR_SIZE - 1;
 	float level = getLevel( mouse_pos.y() );
-	float cross_y = m_y_auto ?
-		grid_bottom - ( ( grid_bottom - TOP_MARGIN )
-				* ( level - m_minLevel )
-				/ (float)( m_maxLevel - m_minLevel ) ) :
-		grid_bottom - ( level - m_bottomLevel ) * m_y_delta;
+	//SPEK
+	float cross_y = grid_bottom - ( ( grid_bottom - TOP_MARGIN )
+	 			* ( level - m_minLevel )
+	 			/ (float)( m_maxLevel - m_minLevel ) ); // * (1 << m_zoomingYModel.value());
+	// float cross_y = m_y_auto ?
+	// 	grid_bottom - ( ( grid_bottom - TOP_MARGIN )
+	// 			* ( level - m_minLevel )
+	// 			/ (float)( m_maxLevel - m_minLevel ) ) :
+	// 	grid_bottom - ( level - m_bottomLevel ) * m_y_delta;
 
 	p.setPen( crossColor() );
 	p.drawLine( VALUES_WIDTH, (int) cross_y, width(), (int) cross_y );
@@ -1155,9 +1159,11 @@ void AutomationEditor::paintEvent(QPaintEvent * pe )
 
 	if( validPattern() )
 	{
-		if( m_y_auto )
-		{
-			int y[] = { grid_bottom, TOP_MARGIN + font_height / 2 };
+		//SPEK
+		// if( m_y_auto )
+		// {
+			//
+			int y[] = { grid_bottom * (1 << m_zoomingYModel.value()), (TOP_MARGIN + font_height / 2) };
 			float level[] = { m_minLevel, m_maxLevel };
 			for( int i = 0; i < 2; ++i )
 			{
@@ -1173,36 +1179,37 @@ void AutomationEditor::paintEvent(QPaintEvent * pe )
 					VALUES_WIDTH - 10, 2 * font_height,
 					text_flags, label );
 			}
-		}
-		else
-		{
-			int y;
-			int level = (int) m_bottomLevel;
-			int printable = qMax( 1, 5 * DEFAULT_Y_DELTA
-								/ m_y_delta );
-			int module = level % printable;
-			if( module )
-			{
-				int inv_module = ( printable - module )
-								% printable;
-				level += inv_module;
-			}
-			for( ; level <= m_topLevel; level += printable )
-			{
-				const QString & label = m_pattern->firstObject()
-							->displayValue( level );
-				y = yCoordOfLevel( level );
-				p.setPen( QApplication::palette().color( QPalette::Active,
-							QPalette::Shadow ) );
-				p.drawText( 1, y - font_height + 1,
-					VALUES_WIDTH - 10, 2 * font_height,
-					text_flags, label );
-				p.setPen( fgColor );
-				p.drawText( 0, y - font_height,
-					VALUES_WIDTH - 10, 2 * font_height,
-					text_flags, label );
-			}
-		}
+		// }
+		// else
+		// {
+			// int y;
+			// int level = (int) m_bottomLevel;
+			// int printable = qMax( 1, 5 * DEFAULT_Y_DELTA
+			// 					* ( 1<< m_zoomingYModel.value() ) );
+			// 					/// m_y_delta );
+			// int module = level % printable;
+			// if( module )
+			// {
+			// 	int inv_module = ( printable - module )
+			// 					% printable;
+			// 	level += inv_module;
+			// }
+			// for( ; level <= m_topLevel; level += printable )
+			// {
+			// 	const QString & label = m_pattern->firstObject()
+			// 				->displayValue( level );
+			// 	y = yCoordOfLevel( level );
+			// 	p.setPen( QApplication::palette().color( QPalette::Active,
+			// 				QPalette::Shadow ) );
+			// 	p.drawText( 1, y - font_height + 1,
+			// 		VALUES_WIDTH - 10, 2 * font_height,
+			// 		text_flags, label );
+			// 	p.setPen( fgColor );
+			// 	p.drawText( 0, y - font_height,
+			// 		VALUES_WIDTH - 10, 2 * font_height,
+			// 		text_flags, label );
+		 	// }
+		// }
 	}
 
 	// set clipping area, because we are not allowed to paint over
@@ -1215,9 +1222,11 @@ void AutomationEditor::paintEvent(QPaintEvent * pe )
 	if( m_pattern )
 	{
 		int tick, x, q;
-		int x_line_end = (int)( m_y_auto || m_topLevel < m_maxLevel ?
-			TOP_MARGIN :
-			grid_bottom - ( m_topLevel - m_bottomLevel ) * m_y_delta );
+		//SPEK
+		int x_line_end = grid_bottom - ( m_topLevel - m_bottomLevel ) * m_y_delta ;//(int) TOP_MARGIN;
+		// int x_line_end = (int)( m_y_auto || m_topLevel < m_maxLevel ?
+		// 	TOP_MARGIN :
+		// 	grid_bottom - ( m_topLevel - m_bottomLevel ) * m_y_delta );
 
 		if( m_zoomingXModel.value() > 3 )
 		{
@@ -1248,8 +1257,9 @@ void AutomationEditor::paintEvent(QPaintEvent * pe )
 		}
 
 		/// \todo move this horizontal line drawing code into the same loop as the value ticks?
-		if( m_y_auto )
-		{
+		//SPEK
+		// if( m_y_auto )
+		// {
 			QPen pen( beatLineColor() );
 			pen.setStyle( Qt::DotLine );
 			p.setPen( pen );
@@ -1259,25 +1269,25 @@ void AutomationEditor::paintEvent(QPaintEvent * pe )
 				int y = (int)( grid_bottom - i * y_delta );
 				p.drawLine( VALUES_WIDTH, y, width(), y );
 			}
-		}
-		else
-		{
-			float y;
-			for( int level = (int)m_bottomLevel; level <= m_topLevel; level++)
-			{
-				y =  yCoordOfLevel( (float)level );
-				if( level % 10 == 0 )
-				{
-					p.setPen( beatLineColor() );
-				}
-				else
-				{
-					p.setPen( lineColor() );
-				}
-				// draw level line
-				p.drawLine( VALUES_WIDTH, (int) y, width(), (int) y );
-			}
-		}
+		// }
+		// else
+		// {
+		// 	float y;
+		// 	for( int level = (int)m_bottomLevel; level <= m_topLevel; level++)
+		// 	{
+		// 		y =  yCoordOfLevel( (float)level );
+		// 		if( level % 10 == 0 )
+		// 		{
+		// 			p.setPen( beatLineColor() );
+		// 		}
+		// 		else
+		// 		{
+		// 			p.setPen( lineColor() );
+		// 		}
+		// 		// draw level line
+		// 		p.drawLine( VALUES_WIDTH, (int) y, width(), (int) y );
+		// 	}
+		// }
 
 
 		// alternating shades for better contrast
@@ -1453,21 +1463,22 @@ void AutomationEditor::paintEvent(QPaintEvent * pe )
 							MidiTime::ticksPerTact();
 	int w = ( sel_pos_end - sel_pos_start ) * m_ppt / MidiTime::ticksPerTact();
 	int y, h;
-	if( m_y_auto )
-	{
+	//SPEK
+	// if( m_y_auto )
+	// {
 		y = (int)( grid_bottom - ( ( grid_bottom - TOP_MARGIN )
 				* ( selLevel_start - m_minLevel )
 				/ (float)( m_maxLevel - m_minLevel ) ) );
 		h = (int)( grid_bottom - ( ( grid_bottom - TOP_MARGIN )
 				* ( selLevel_end - m_minLevel )
 				/ (float)( m_maxLevel - m_minLevel ) ) - y );
-	}
-	else
-	{
-		y = (int)( grid_bottom - ( selLevel_start - m_bottomLevel )
-								* m_y_delta );
-		h = (int)( ( selLevel_start - selLevel_end ) * m_y_delta );
-	}
+	// }
+	// else
+	// {
+	// 	y = (int)( grid_bottom - ( selLevel_start - m_bottomLevel )
+	// 							* m_y_delta );
+	// 	h = (int)( ( selLevel_start - selLevel_end ) * m_y_delta );
+	// }
 	p.setPen( QColor( 0, 64, 192 ) );
 	p.drawRect( x + VALUES_WIDTH, y, w, h );
 
@@ -1483,7 +1494,6 @@ void AutomationEditor::paintEvent(QPaintEvent * pe )
 
 	if( validPattern() && GuiApplication::instance()->automationEditor()->hasFocus() )
 	{
-
 		drawCross( p );
 	}
 
@@ -1529,14 +1539,16 @@ int AutomationEditor::xCoordOfTick(int tick )
 float AutomationEditor::yCoordOfLevel(float level )
 {
 	int grid_bottom = height() - SCROLLBAR_SIZE - 1;
-	if( m_y_auto )
-	{
-		return ( grid_bottom - ( grid_bottom - TOP_MARGIN ) * ( level - m_minLevel ) / ( m_maxLevel - m_minLevel ) );
-	}
-	else
-	{
-		return ( grid_bottom - ( level - m_bottomLevel ) * m_y_delta );
-	}
+	//SPEK DONE?
+	// if( m_y_auto )
+	// {
+	float oneX = ( grid_bottom - ( grid_bottom - TOP_MARGIN ) * ( level - m_minLevel ) / ( m_maxLevel - m_minLevel ) );
+		return oneX * (1 << m_zoomingYModel.value());
+	// }
+	// else
+	// {
+	// 	return ( grid_bottom - ( level - m_bottomLevel ) * m_y_delta );
+	// }
 }
 
 
@@ -1558,19 +1570,20 @@ void AutomationEditor::drawLevelTick(QPainter & p, int tick, float value)
 		int y_start = yCoordOfLevel( value );
 		int rect_height;
 
-		if( m_y_auto )
-		{
+		//SPEK
+		// if( m_y_auto )
+		// {
 			int y_end = (int)( grid_bottom
 						+ ( grid_bottom - TOP_MARGIN )
 						* m_minLevel
 						/ ( m_maxLevel - m_minLevel ) );
 
 			rect_height = y_end - y_start;
-		}
-		else
-		{
-			rect_height = (int)( value * m_y_delta );
-		}
+		// }
+		// else
+		// {
+		// 	rect_height = (int)( value * m_y_delta );
+		// }
 
 		//NEEDS Change in CSS
 		/*QBrush currentColor = is_selected
@@ -1606,13 +1619,16 @@ void AutomationEditor::resizeEvent(QResizeEvent * re)
 						SCROLLBAR_SIZE, grid_height );
 
 	int half_grid = grid_height / 2;
-	int total_pixels = (int)( ( m_maxLevel - m_minLevel ) * m_y_delta + 1 );
-	if( !m_y_auto && grid_height < total_pixels )
+	//int total_pixels = (int)( ( m_maxLevel - m_minLevel ) * m_y_delta + 1 );
+	//Spek
+	if( m_zoomingYModel.value() > 0 )
 	{
-		int min_scroll = (int)( m_minLevel + floorf( half_grid
-							/ (float)m_y_delta ) );
-		int max_scroll = (int)( m_maxLevel - (int)floorf( ( grid_height
-					- half_grid ) / (float)m_y_delta ) );
+		// int min_scroll = (int)( m_minLevel + floorf( half_grid
+		// 					/ (float)m_y_delta ) );
+		// int max_scroll = (int)( m_maxLevel - (int)floorf( ( grid_height
+		// 			- half_grid ) / (float)m_y_delta ) );
+		int min_scroll = 0;
+		int max_scroll = 10 * (1 << m_zoomingYModel.value());
 		m_topBottomScroll->setRange( min_scroll, max_scroll );
 	}
 	else
@@ -1620,6 +1636,8 @@ void AutomationEditor::resizeEvent(QResizeEvent * re)
 		m_topBottomScroll->setRange( (int) m_scrollLevel,
 							(int) m_scrollLevel );
 	}
+
+	// * (1 << m_zoomingYModel.value())
 
 	m_topBottomScroll->setValue( (int) m_scrollLevel );
 
@@ -1702,10 +1720,13 @@ float AutomationEditor::getLevel(int y )
 {
 	int level_line_y = height() - SCROLLBAR_SIZE - 1;
 	// pressed level
-	float level = roundf( ( m_bottomLevel + ( m_y_auto ?
-			( m_maxLevel - m_minLevel ) * ( level_line_y - y )
-					/ (float)( level_line_y - ( TOP_MARGIN + 2 ) ) :
-			( level_line_y - y ) / (float)m_y_delta ) ) / m_step ) * m_step;
+	//Spek
+	float level = roundf( ( m_bottomLevel + ( ( m_maxLevel - m_minLevel ) * ( level_line_y - y )
+					/ (float)( level_line_y - ( TOP_MARGIN + 2 ) ) ) / m_step ) ) * m_step;
+	// float level = roundf( ( m_bottomLevel + ( m_y_auto ?
+	// 		( m_maxLevel - m_minLevel ) * ( level_line_y - y )
+	// 				/ (float)( level_line_y - ( TOP_MARGIN + 2 ) ) :
+	// 		( level_line_y - y ) / (float)m_y_delta ) ) / m_step ) * m_step;
 	// some range-checking-stuff
 	level = qBound( m_bottomLevel, level, m_topLevel );
 
@@ -2113,12 +2134,14 @@ void AutomationEditor::zoomingXChanged()
 void AutomationEditor::zoomingYChanged()
 {
 	const QString & zfac = m_zoomingYModel.currentText();
-	m_y_auto = zfac == "Auto";
-	if( !m_y_auto )
-	{
-		m_y_delta = zfac.left( zfac.length() - 1 ).toInt()
-							* DEFAULT_Y_DELTA / 100;
-	}
+	//Spek
+	m_y_auto = zfac == "1X"; // || true;
+	// if( !m_y_auto )
+	// {
+	m_y_delta =  (1 << m_zoomingYModel.value()) * DEFAULT_Y_DELTA;
+	// 	m_y_delta = zfac.left( zfac.length() - 1 ).toInt()
+	// 						* DEFAULT_Y_DELTA / 100;
+	// }
 #ifdef LMMS_DEBUG
 	assert( m_y_delta > 0 );
 #endif
@@ -2155,46 +2178,55 @@ void AutomationEditor::setQuantization()
 
 void AutomationEditor::updateTopBottomLevels()
 {
-	if( m_y_auto )
-	{
-		m_bottomLevel = m_minLevel;
-		m_topLevel = m_maxLevel;
-		return;
-	}
 
-	int total_pixels = (int)( ( m_maxLevel - m_minLevel ) * m_y_delta + 1 );
-	int grid_height = height() - TOP_MARGIN - SCROLLBAR_SIZE;
-	int half_grid = grid_height / 2;
+	//int grid_height = height() - TOP_MARGIN - SCROLLBAR_SIZE;
+	//int viewRange = grid_height / (1 << m_zoomingYModel.value());
+	//int viewRange = (m_maxLevel - m_minLevel) / (1 << m_zoomingYModel.value());
+	//int scrollRange = m_topBottomScroll->maximum() - m_topBottomScroll->minimum();
+	//int scrollRange = m_topBottomScroll->maximum() - m_topBottomScroll->minimum();
+	//SPEK
+	// if( m_y_auto )
+	// {
+		//m_topLevel = m_maxLevel * (1 << m_zoomingYModel.value());
+		//m_topLevel = viewRange + (grid_height - viewRange) * (m_scrollLevel / scrollRange);
+		//m_topLevel = viewRange + (m_maxLevel - viewRange) * (m_scrollLevel / scrollRange);
+		//m_bottomLevel = m_topLevel - viewRange;
+		//return;
+	// }
 
-	if( total_pixels > grid_height )
-	{
-		int centralLevel = (int)( m_minLevel + m_maxLevel - m_scrollLevel );
+	// int total_pixels = (int)( ( m_maxLevel - m_minLevel ) * m_y_delta + 1 );
+	// int grid_height = height() - TOP_MARGIN - SCROLLBAR_SIZE;
+	// int half_grid = grid_height / 2;
 
-		m_bottomLevel = centralLevel - ( half_grid
-							/ (float)m_y_delta );
-		if( m_bottomLevel < m_minLevel )
-		{
-			m_bottomLevel = m_minLevel;
-			m_topLevel = m_minLevel + (int)floorf( grid_height
-							/ (float)m_y_delta );
-		}
-		else
-		{
-			m_topLevel = m_bottomLevel + (int)floorf( grid_height
-							/ (float)m_y_delta );
-			if( m_topLevel > m_maxLevel )
-			{
-				m_topLevel = m_maxLevel;
-				m_bottomLevel = m_maxLevel - (int)floorf(
-					grid_height / (float)m_y_delta );
-			}
-		}
-	}
-	else
-	{
-		m_bottomLevel = m_minLevel;
-		m_topLevel = m_maxLevel;
-	}
+	// if( total_pixels > grid_height )
+	// {
+	// 	int centralLevel = (int)( m_minLevel + m_maxLevel - m_scrollLevel );
+	//
+	// 	m_bottomLevel = centralLevel - ( half_grid
+	// 						/ (float)m_y_delta );
+	// 	if( m_bottomLevel < m_minLevel )
+	// 	{
+	// 		m_bottomLevel = m_minLevel;
+	// 		m_topLevel = m_minLevel + (int)floorf( grid_height
+	// 						/ (float)m_y_delta );
+	// 	}
+	// 	else
+	// 	{
+	// 		m_topLevel = m_bottomLevel + (int)floorf( grid_height
+	// 						/ (float)m_y_delta );
+	// 		if( m_topLevel > m_maxLevel )
+	// 		{
+	// 			m_topLevel = m_maxLevel;
+	// 			m_bottomLevel = m_maxLevel - (int)floorf(
+	// 				grid_height / (float)m_y_delta );
+	// 		}
+	// 	}
+	// }
+	// else
+	// {
+	 	m_bottomLevel = m_minLevel;// * (1 << m_zoomingYModel.value());
+	 	m_topLevel = m_maxLevel;// * (1 << m_zoomingYModel.value());
+	// }
 }
 
 
@@ -2424,12 +2456,12 @@ AutomationEditorWindow::AutomationEditorWindow() :
 	m_zoomingYComboBox = new ComboBox( zoomToolBar );
 	m_zoomingYComboBox->setFixedSize( 80, 22 );
 
-	m_editor->m_zoomingYModel.addItem( "Auto" );
+	//Add zoom levels to toolbar (2^i, 0 <= i <= 7)
 	for( int i = 0; i < 7; ++i )
 	{
-		m_editor->m_zoomingYModel.addItem( QString::number( 25 << i ) + "%" );
+		m_editor->m_zoomingYModel.addItem( QString::number(1 << i) + "X" );
 	}
-	m_editor->m_zoomingYModel.setValue( m_editor->m_zoomingYModel.findText( "Auto" ) );
+	m_editor->m_zoomingYModel.setValue( m_editor->m_zoomingYModel.findText( "1X" ) );
 
 	m_zoomingYComboBox->setModel( &m_editor->m_zoomingYModel );
 
