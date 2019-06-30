@@ -1,0 +1,3 @@
+INCLUDE(BuildPlugin)
+
+BUILD_PLUGIN(imagemetronome ImageMetronome.cpp ImageMetronomeControls.cpp ImageMetronomeControlDialog.cpp MOCFILES ImageMetronomeControls.h ImageMetronomeControlDialog.h EMBEDDED_RESOURCES artwork.png logo.png)

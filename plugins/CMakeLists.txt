@@ -51,6 +51,7 @@ IF("${PLUGIN_LIST}" STREQUAL "")
 		Delay
 		DualFilter
 		dynamics_processor
+		ImageMetronome
 		Eq
 		Flanger
 		HydrogenImport
