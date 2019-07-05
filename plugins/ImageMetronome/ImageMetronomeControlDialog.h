@@ -26,6 +26,7 @@
 #define IMAGEMETRONOME_CONTROL_DIALOG_H
 
 #include "EffectControlDialog.h"
+#include <QLabel>
 
 
 class ImageMetronomeControls;
@@ -36,9 +37,17 @@ class ImageMetronomeControlDialog : public EffectControlDialog
 	Q_OBJECT
 public:
 	ImageMetronomeControlDialog( ImageMetronomeControls* controls );
+	QLabel * m_imageDisplay;
+	std::vector<QPixmap> m_images;
+	std::vector<int> m_lookup;
+
 	virtual ~ImageMetronomeControlDialog()
 	{
 	}
+
+private slots:
+	void updateImageDir();
+	void update();
 
 } ;
 
