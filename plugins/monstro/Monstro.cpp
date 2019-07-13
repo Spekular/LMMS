@@ -28,7 +28,6 @@
 #include "Monstro.h"
 #include "Engine.h"
 #include "InstrumentTrack.h"
-#include "templates.h"
 #include "gui_templates.h"
 #include "ToolTip.h"
 #include "Song.h"
@@ -1828,9 +1827,9 @@ extern "C"
 {
 
 // necessary for getting instance out of shared lib
-PLUGIN_EXPORT Plugin * lmms_plugin_main( Model *, void * _data )
+PLUGIN_EXPORT Plugin * lmms_plugin_main( Model *m, void * )
 {
-	return new MonstroInstrument( static_cast<InstrumentTrack *>( _data ) );
+	return new MonstroInstrument( static_cast<InstrumentTrack *>( m ) );
 }
 
 

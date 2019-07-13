@@ -1,7 +1,7 @@
 /*
- * templates.h - miscellanous templates and algorithms
+ * FxLineLcdSpinBox.h - a specialization of LcdSpnBox for setting FX channels
  *
- * Copyright (c) 2004-2008 Tobias Doerffel <tobydox/at/users.sourceforge.net>
+ * Copyright (c) 2004-2014 Tobias Doerffel <tobydox/at/users.sourceforge.net>
  *
  * This file is part of LMMS - https://lmms.io
  *
@@ -22,18 +22,32 @@
  *
  */
 
+#ifndef FX_LINE_LCD_SPIN_BOX_H
+#define FX_LINE_LCD_SPIN_BOX_H
 
-#ifndef TEMPLATES_H
-#define TEMPLATES_H
+#include "LcdSpinBox.h"
 
-#include <QtCore/QtAlgorithms>
+class TrackView;
 
 
-template<class T>
-inline T tLimit( const T x, const T x1, const T x2 )
+class FxLineLcdSpinBox : public LcdSpinBox
 {
-	return qBound( x1, x, x2 );
-}
+	Q_OBJECT
+public:
+	FxLineLcdSpinBox(int numDigits, QWidget * parent, const QString& name, TrackView * tv = NULL) :
+		LcdSpinBox(numDigits, parent, name), m_tv(tv)
+	{}
+	virtual ~FxLineLcdSpinBox() {}
 
+	void setTrackView(TrackView * tv);
+
+protected:
+	virtual void mouseDoubleClickEvent(QMouseEvent* event);
+	virtual void contextMenuEvent(QContextMenuEvent* event);
+
+private:
+	TrackView * m_tv;
+
+};
 
 #endif

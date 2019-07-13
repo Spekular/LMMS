@@ -28,7 +28,6 @@
 #include "base64.h"
 #include "Engine.h"
 #include "InstrumentTrack.h"
-#include "templates.h"
 #include "ToolTip.h"
 #include "Song.h"
 #include "lmms_math.h"
@@ -1279,9 +1278,9 @@ extern "C"
 {
 
 // necessary for getting instance out of shared lib
-PLUGIN_EXPORT Plugin * lmms_plugin_main( Model *, void * _data )
+PLUGIN_EXPORT Plugin * lmms_plugin_main( Model *m, void * )
 {
-	return( new WatsynInstrument( static_cast<InstrumentTrack *>( _data ) ) );
+	return( new WatsynInstrument( static_cast<InstrumentTrack *>( m ) ) );
 }
 
 
