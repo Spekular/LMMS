@@ -1026,7 +1026,7 @@ void PianoRoll::drawDetuningInfo( QPainter & _p, const Note * _n, int _x,
 	_p.setPen( noteColor() );
 	_p.setClipRect(WHITE_KEY_WIDTH, PR_TOP_MARGIN,
 		width() - WHITE_KEY_WIDTH,
-		keyAreaBottom() - PR_TOP_MARGIN);
+		keyAreaBottom() - keyAreaTop());
 
 	int old_x = 0;
 	int old_y = 0;
@@ -1460,8 +1460,7 @@ void PianoRoll::leaveEvent(QEvent * e )
 
 int PianoRoll::noteEditTop() const
 {
-	return height() - PR_BOTTOM_MARGIN -
-		m_notesEditHeight + NOTE_EDIT_RESIZE_BAR;
+	return keyAreaBottom() + NOTE_EDIT_RESIZE_BAR;
 }
 
 
@@ -1501,7 +1500,7 @@ int PianoRoll::keyAreaTop() const
 
 int PianoRoll::keyAreaBottom() const
 {
-	return height() - PR_BOTTOM_MARGIN - m_notesEditHeight;
+	return qMin(height() - PR_BOTTOM_MARGIN - m_notesEditHeight, KEY_LINE_HEIGHT * NumKeys);
 }
 
 
@@ -2593,9 +2592,7 @@ void PianoRoll::mouseMoveEvent( QMouseEvent * me )
 
 
 			int key_num = getKey( me->y() );
-			int visible_keys = ( height() - PR_TOP_MARGIN -
-						PR_BOTTOM_MARGIN -
-						m_notesEditHeight ) /
+			int visible_keys = ( keyAreaBottom() - keyAreaTop() ) /
 							KEY_LINE_HEIGHT + 2;
 			const int s_key = m_startKey - 1;
 
@@ -3391,8 +3388,7 @@ void PianoRoll::paintEvent(QPaintEvent * pe )
 	}
 
 	p.setClipRect( WHITE_KEY_WIDTH, PR_TOP_MARGIN, width() -
-				WHITE_KEY_WIDTH, height() - PR_TOP_MARGIN -
-					m_notesEditHeight - PR_BOTTOM_MARGIN );
+				WHITE_KEY_WIDTH, keyAreaBottom() - keyAreaTop() );
 
 	// now draw selection-frame
 	int x = ( ( sel_pos_start - m_currentPosition ) * m_ppb ) /
@@ -3480,9 +3476,7 @@ void PianoRoll::resizeEvent(QResizeEvent * re)
 						height() - PR_TOP_MARGIN -
 						SCROLLBAR_SIZE );
 
-	int total_pixels = OCTAVE_HEIGHT * NumOctaves - ( height() -
-					PR_TOP_MARGIN - PR_BOTTOM_MARGIN -
-							m_notesEditHeight );
+	int total_pixels = OCTAVE_HEIGHT * NumOctaves - ( keyAreaBottom() - keyAreaTop() );
 	m_totalKeysToScroll = total_pixels * KeysPerOctave / OCTAVE_HEIGHT;
 
 	m_topBottomScroll->setRange( 0, m_totalKeysToScroll );
