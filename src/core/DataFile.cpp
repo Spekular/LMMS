@@ -772,10 +772,10 @@ void DataFile::upgrade_0_4_0_rc2()
 void DataFile::upgrade_1_0_99()
 {
 	jo_id_t last_assigned_id = 0;
-	
+
 	QList<jo_id_t> idList;
 	findIds(documentElement(), idList);
-	
+
 	QDomNodeList list = elementsByTagName("ladspacontrols");
 	for(int i = 0; !list.item(i).isNull(); ++i)
 	{
@@ -791,22 +791,22 @@ void DataFile::upgrade_1_0_99()
 					QDomElement me = createElement("data");
 					me.setAttribute("value", el.attribute("data"));
 					me.setAttribute("scale_type", "log");
-					
+
 					jo_id_t id;
 					for(id = last_assigned_id + 1;
 						idList.contains(id); id++)
 					{
 					}
-					
+
 					last_assigned_id = id;
 					idList.append(id);
 					me.setAttribute("id", id);
 					el.appendChild(me);
-					
+
 				}
 			}
 		}
-	}	
+	}
 }
 
 
@@ -1047,7 +1047,7 @@ void DataFile::upgrade_1_3_0()
 
 					QDomElement attribute = attributes.item( k ).toElement();
 					if( attribute.attribute( "name" ) == "file" &&
-							( attribute.attribute( "value" ) == "calf" || 
+							( attribute.attribute( "value" ) == "calf" ||
 							attribute.attribute( "value" ) == "calf.so" ) )
 					{
 						attribute.setAttribute( "value", "veal" );
@@ -1311,7 +1311,7 @@ void DataFile::upgrade_1_3_0()
 						};
 						iterate_ladspa_ports(effect, fn);
 					}
-					
+
 					if( attribute.attribute( "name" ) == "plugin" &&
 						attribute.attribute( "value" ) == "StereoTools" )
 					{
@@ -1332,6 +1332,35 @@ void DataFile::upgrade_1_3_0()
 				}
 			}
 		}
+	}
+}
+
+void DataFile::upgrade_1_3_0_alpha_1()
+{
+	QDomNodeList tracks = elementsByTagName("track");
+
+	auto clearDefaultNames = [](QDomNodeList clips, QString trackName)
+	{
+		for (int j = 0; !clips.item(j).isNull(); ++j)
+		{
+			QDomElement clip = clips.item(j).toElement();
+			QString clipName = clip.attribute("name", "");
+			if (clipName == trackName){ clip.setAttribute("name", ""); }
+		}
+	};
+
+	for (int i = 0; !tracks.item(i).isNull(); ++i)
+	{
+		QDomElement track = tracks.item(i).toElement();
+		QString trackName = track.attribute("name", "");
+
+		QDomNodeList instClips = elementsByTagName("pattern");
+		QDomNodeList autoClips = elementsByTagName("automationpattern");
+		QDomNodeList bbClips = elementsByTagName("bbtco");
+
+		clearDefaultNames(instClips, trackName);
+		clearDefaultNames(autoClips, trackName);
+		clearDefaultNames(bbClips, trackName);
 	}
 }
 
@@ -1417,6 +1446,7 @@ void DataFile::upgrade()
 		upgrade_1_2_0_rc3();
 		upgrade_1_2_0_rc2_42();
 	}
+	if ( version < "1.3.0-alpha-1" ){ upgrade_1_3_0_alpha_1(); }
 	if( version < "1.3.0" )
 	{
 		upgrade_1_3_0();
@@ -1536,7 +1566,7 @@ void findIds(const QDomElement& elem, QList<jo_id_t>& idList)
 		idList.append(elem.attribute("id").toInt());
 	}
 	QDomElement child = elem.firstChildElement();
-	while(!child.isNull()) 
+	while(!child.isNull())
 	{
 		findIds(child, idList);
 		child = child.nextSiblingElement();
