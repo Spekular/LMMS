@@ -84,6 +84,13 @@ public:
 		}
 		return m_autoPattern;
 	}
+	
+	void setAutomationPattern(AutomationPattern * pattern)
+	{
+		if (m_autoPattern){ delete m_autoPattern; }
+		m_autoPattern = pattern;
+		m_autoPattern->addObject( this );
+	}
 
 	void saveSettings( QDomDocument & _doc, QDomElement & _parent ) override;
 	void loadSettings( const QDomElement & _this ) override;

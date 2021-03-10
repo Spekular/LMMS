@@ -73,9 +73,11 @@ Note::Note( const Note & note ) :
 	m_pos( note.m_pos ),
 	m_detuning( NULL )
 {
+	createDetuning();
 	if( note.m_detuning )
 	{
-		m_detuning = sharedObject::ref( note.m_detuning );
+		auto pattern = new AutomationPattern(*(note.m_detuning->automationPattern()));
+		m_detuning->setAutomationPattern(pattern);
 	}
 }
 
