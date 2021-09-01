@@ -175,6 +175,10 @@ signals:
 
 
 public slots:
+	void updateLength(const int& bars)
+	{
+		m_length = TimePos(bars * TimePos::ticksPerBar());
+	};
 	void updatePosition( const TimePos & );
 	void updatePosition()
 	{
@@ -183,6 +187,8 @@ public slots:
 	void toggleAutoScroll( int _n );
 	void toggleLoopPoints( int _n );
 	void toggleBehaviourAtStop( int _n );
+
+	// TODO updateSnapSize
 
 
 protected:
@@ -194,6 +200,10 @@ protected:
 
 
 private:
+	void chooseMouseAction(QMouseEvent* event);
+	TimePos getPositionFromX(const int x) const;
+	void setLoopPoint(bool end, int x, bool unquantized=false);
+
 	static QPixmap * s_posMarkerPixmap;
 
 	QColor m_inactiveLoopColor;
@@ -221,28 +231,32 @@ private:
 	float m_snapSize;
 	Song::PlayPos & m_pos;
 	const TimePos & m_begin;
+	TimePos m_length = 0;
 	const Song::PlayModes m_mode;
 	TimePos m_loopPos[2];
+	TimePos m_oldLoopPos[2];
 
 	TimePos m_savedPos;
 
 
 	TextFloat * m_hint;
-	int m_initalXSelect;
+	int m_moveStartX = 0;
 
 
 	enum actions
 	{
 		NoAction,
+		Thresholded,
+		ShowContextMenu,
 		MovePositionMarker,
 		MoveLoopBegin,
 		MoveLoopEnd,
 		MoveLoopClosest,
 		DragLoop,
+		DrawLoop,
 		SelectSongTCO,
 	} m_action;
 
-	int m_moveXOff;
 
 
 signals:

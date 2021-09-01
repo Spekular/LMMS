@@ -93,6 +93,7 @@ SongEditor::SongEditor( Song * song ) :
 			this, SLOT( selectRegionFromPixels( int, int ) ) );
 	connect( m_timeLine, SIGNAL( selectionFinished() ),
 			 this, SLOT( stopRubberBand() ) );
+	connect(m_song, SIGNAL(lengthChanged(int)), m_timeLine, SLOT(updateLength(int)));
 
 	m_positionLine = new PositionLine(this);
 	static_cast<QVBoxLayout *>( layout() )->insertWidget( 1, m_timeLine );

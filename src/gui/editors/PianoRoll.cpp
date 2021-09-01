@@ -841,6 +841,7 @@ void PianoRoll::setCurrentPattern( Pattern* newPattern )
 	if( hasValidPattern() )
 	{
 		m_pattern->instrumentTrack()->disconnect( this );
+		m_pattern->disconnect(this);
 	}
 
 	// force the song-editor to stop playing if it played pattern before
@@ -905,6 +906,11 @@ void PianoRoll::setCurrentPattern( Pattern* newPattern )
 
 	connect(m_pattern->instrumentTrack()->firstKeyModel(), SIGNAL(dataChanged()), this, SLOT(update()));
 	connect(m_pattern->instrumentTrack()->lastKeyModel(), SIGNAL(dataChanged()), this, SLOT(update()));
+
+	connect(m_pattern, &TrackContentObject::lengthChanged, m_timeLine, [this]
+	{
+		m_timeLine->updateLength(m_pattern->length().nextFullBar());
+	});
 
 	update();
 	emit currentPatternChanged();
