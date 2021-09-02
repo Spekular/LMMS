@@ -357,25 +357,18 @@ void TimeLineWidget::mousePressEvent( QMouseEvent* event )
 void TimeLineWidget::mouseMoveEvent( QMouseEvent* event )
 {
 	parentWidget()->update(); // essential for widgets that this timeline had taken their mouse move event from.
-
-	// Fine adjust when ctrl is held
+	// Fine adjust when ctrl is held, hide ctrl hint
 	bool unquantized = event->modifiers() & Qt::ControlModifier;
+	if (unquantized)
+	{
+		delete m_hint;
+		m_hint = nullptr;
+	}
 
 	// Set action when we exceed drag threshold
 	if (m_action == Thresholded && abs(event->x() - m_moveStartX) > DRAG_ACTION_THRESHOLD)
 	{
 		chooseMouseAction(event);
-	}
-
-	// Notify the user if they can disable quantization
-	if (!unquantized && m_action != SelectSongTCO && m_action != NoAction)
-	{
-		if (!m_hint)
-		{
-			m_hint = TextFloat::displayMessage(tr("Hint"),
-				tr("Hold <%1> to disable quantization.").arg(UI_CTRL_KEY),
-				embed::getIconPixmap("hint"), 0);
-		}
 	}
 
 	switch (m_action)
@@ -512,8 +505,11 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 	// TODO: Read these from a config
 	static std::vector<Binding> bindings {
 		// Actions that may be unquantized by holding Control
-		{Qt::LeftButton, Qt::ShiftModifier, QEvent::MouseButtonPress, MoveLoopBegin},
-		{Qt::RightButton, Qt::ShiftModifier, QEvent::MouseButtonPress, MoveLoopEnd},
+		// (the MouseMoves will show a TextFloat but the ButtonReleases won't)
+		{Qt::LeftButton, Qt::ShiftModifier, QEvent::MouseMove, MoveLoopBegin},
+		{Qt::LeftButton, Qt::ShiftModifier, QEvent::MouseButtonRelease, MoveLoopBegin},
+		{Qt::RightButton, Qt::ShiftModifier, QEvent::MouseMove, MoveLoopEnd},
+		{Qt::RightButton, Qt::ShiftModifier, QEvent::MouseButtonRelease, MoveLoopEnd},
 		{Qt::RightButton, Qt::NoModifier, QEvent::MouseMove, DrawLoop},
 		{Qt::MiddleButton, Qt::NoModifier, QEvent::MouseMove, DragLoop},
 		// Other actions
@@ -529,17 +525,29 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 	auto mods = event->modifiers();
 	auto type = event->type();
 
+	// default value for mouse press = wait for it to exceed drag threshold
+	m_action = event->type() == QEvent::MouseButtonPress ? Thresholded : NoAction;
+
 	for (Binding b: bindings)
 	{
 		if (b.button & buttons && (b.mod & mods || b.mod == Qt::NoModifier) && b.type == type)
 		{
 			m_action = b.action;
-			return;
+			break;
 		}
 	}
 
-	// if pressed but no match, wait for it to exceed drag threshold
-	m_action = event->type() == QEvent::MouseButtonPress ? Thresholded : NoAction;
+	// Notify the user if they can disable quantization
+	// only show when dragging, and ctrl is not pressed
+	bool isQuantized = m_action == MoveLoopBegin || m_action == MoveLoopEnd
+					|| m_action == DrawLoop || m_action == DragLoop;
+	if (isQuantized && event->type() == QEvent::MouseMove && !(mods & Qt::ControlModifier))
+	{
+		delete m_hint;
+		m_hint = TextFloat::displayMessage(tr("Hint"),
+			tr("Hold <%1> to disable quantization.").arg(UI_CTRL_KEY),
+			embed::getIconPixmap("hint"), 0);
+	}
 }
 
 
