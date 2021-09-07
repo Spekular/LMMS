@@ -224,7 +224,6 @@ private:
 	float m_snapSize;
 	Song::PlayPos & m_pos;
 	const TimePos & m_begin;
-	TimePos m_length = 0;
 	const Song::PlayModes m_mode;
 	TimePos m_loopPos[2];
 

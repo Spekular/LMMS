@@ -477,14 +477,17 @@ void TimeLineWidget::setLoopPoint(bool end, int x, bool unquantized)
 
 	// Length of quantization step
 	TimePos oneSnap = TimePos::ticksPerBar() * m_snapSize;
-
+	if (m_loopPos[1] == 0)
+	{
+		// End may not be at bar 0
+		m_loopPos[1] = oneSnap;
+	}
 	if (m_loopPos[0] >= m_loopPos[1])
 	{
-		// End moved past start - move start to begining
-		if (end) { m_loopPos[0] = 0; }
-		// Start moved past end - move end to end of song
-		// TODO m_length is currently set to 0 as we don't have access to length info...
-		else { m_loopPos[1] = std::max(m_length, TimePos(m_loopPos[0] + oneSnap)); }
+		// End moved before start - move start one step back
+		if (end) { m_loopPos[0] = std::max(0, m_loopPos[1] - oneSnap); }
+		// Start moved past end - move end one step forward
+		else { m_loopPos[1] = m_loopPos[0] + oneSnap; }
 	}
 	update();
 }
