@@ -413,6 +413,34 @@ void TimeLineWidget::mouseMoveEvent( QMouseEvent* event )
 			update();
 			break;
 		}
+		case DrawLoop:
+		{
+			TimePos start = getPositionFromX(m_initalXSelect);
+			TimePos end = getPositionFromX(event->x());
+			TimePos mousePos = end;
+			int stepTicks = 1;
+
+			if (!unquantized)
+			{
+				start = start.quantize(m_snapSize);
+				end = end.quantize(m_snapSize);
+				stepTicks = TimePos::ticksPerBar() * m_snapSize;
+			}
+			if (start == end) {
+				// If loop is quantized to zero length, expand it 1 step in the mouse direction
+				// and since mousePos cannot be smaller than 0, it will always expand to the right of absolute 0
+				if (mousePos < start) { start -= stepTicks; }
+				else { end += stepTicks; }
+			}
+			else if (start > end)
+			{
+				std::swap(start, end);
+			}
+			m_loopPos[0] = start;
+			m_loopPos[1] = end;
+			update();
+			break;
+		}
 		case SelectSongTCO:
 			emit regionSelectedFromPixels(m_initalXSelect , event->x());
 			break;
@@ -485,6 +513,10 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 			if (mods & Qt::ShiftModifier) { m_action = MoveLoopEnd; }
 			else { m_action = DragLoop; }
 		}
+		else if (buttons & Qt::MiddleButton)
+		{
+			m_action = DrawLoop;
+		}
 	}
 	// If mouse has not moved
 	else if (type == QEvent::MouseButtonRelease)
@@ -502,7 +534,7 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 
 	// Notify the user if they can disable quantization
 	bool unquantizable = m_action == MoveLoopBegin || m_action == MoveLoopEnd
-						|| m_action == DragLoop;
+						|| m_action == DragLoop || m_action == DrawLoop;
 	bool unquantized = mods & Qt::ControlModifier;
 	if (unquantizable && !unquantized && type == QEvent::MouseMove)
 	{

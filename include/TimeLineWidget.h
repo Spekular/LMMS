@@ -245,6 +245,7 @@ private:
 		MoveLoopBegin,
 		MoveLoopEnd,
 		DragLoop,
+		DrawLoop,
 		SelectSongTCO,
 		ShowContextMenu
 	} m_action;
