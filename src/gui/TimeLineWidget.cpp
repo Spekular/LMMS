@@ -312,6 +312,14 @@ void TimeLineWidget::paintEvent( QPaintEvent * )
 void TimeLineWidget::contextMenuEvent(QContextMenuEvent*)
 {
 	QMenu contextMenu(tr("Timeline"), this);
+	QAction setStartPoint(tr("Loop start (shift + left click)"), this);
+	connect(&setStartPoint, &QAction::triggered, this, [this](){
+		setLoopPoint(0, m_initalXSelect);
+	});
+	QAction setEndPoint(tr("Loop end (shift + right click)"), this);
+	connect(&setEndPoint, &QAction::triggered, this, [this](){
+		setLoopPoint(1, m_initalXSelect);
+	});
 	QAction selectLoopPoints(tr("Select between loop points"), this);
 	connect(&selectLoopPoints, &QAction::triggered, this, [this](){
 		emit regionSelectedFromPixels(
@@ -320,6 +328,8 @@ void TimeLineWidget::contextMenuEvent(QContextMenuEvent*)
 		);
 		emit selectionFinished();
 	});
+	contextMenu.addAction(&setStartPoint);
+	contextMenu.addAction(&setEndPoint);
 	contextMenu.addAction(&selectLoopPoints);
 	contextMenu.exec(QCursor::pos());
 }
@@ -364,13 +374,6 @@ void TimeLineWidget::mouseMoveEvent( QMouseEvent* event )
 	if (m_action == Thresholded && abs(event->x() - m_initalXSelect) > dragThreshold)
 	{
 		chooseMouseAction(event);
-	}
-
-	// Translate MoveLoopClosest into left or right based on distance
-	if (m_action == MoveLoopClosest)
-	{
-		const TimePos loopMid = (m_loopPos[0] + m_loopPos[1]) / 2;
-		m_action = t < loopMid ? MoveLoopBegin : MoveLoopEnd;
 	}
 
 	switch (m_action)
@@ -475,7 +478,6 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 		else if (buttons & Qt::RightButton)
 		{
 			if (mods & Qt::ShiftModifier) { m_action = MoveLoopEnd; }
-			else if (mods & Qt::ControlModifier) { m_action = MoveLoopClosest; }
 		}
 	}
 	// If mouse has not moved
@@ -488,14 +490,13 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 		else if (buttons & Qt::RightButton)
 		{
 			if (mods & Qt::ShiftModifier) { m_action = MoveLoopEnd; }
-			else if (mods & Qt::ControlModifier) { m_action = MoveLoopClosest; }
 			else { m_action = ShowContextMenu; }
 		}
 	}
 
 	// Notify the user if they can disable quantization
 	bool unquantizable = m_action == MoveLoopBegin || m_action == MoveLoopEnd
-						|| m_action == MoveLoopClosest || m_action == DragLoop;
+						|| m_action == DragLoop;
 	bool unquantized = mods == (Qt::ControlModifier | Qt::ShiftModifier);
 	if (unquantizable && !unquantized && type == QEvent::MouseMove)
 	{

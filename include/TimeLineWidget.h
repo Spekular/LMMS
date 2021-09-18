@@ -242,7 +242,6 @@ private:
 		MovePositionMarker,
 		MoveLoopBegin,
 		MoveLoopEnd,
-		MoveLoopClosest,
 		DragLoop,
 		SelectSongTCO,
 		ShowContextMenu
