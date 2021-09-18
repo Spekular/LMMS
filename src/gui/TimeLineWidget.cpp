@@ -350,6 +350,8 @@ void TimeLineWidget::mousePressEvent( QMouseEvent* event )
 
 	// Set initial position for actions that need it
 	m_initalXSelect = event->x();
+	m_oldLoopPos[0] = m_loopPos[0];
+	m_oldLoopPos[1] = m_loopPos[1];
 
 	mouseMoveEvent(event);
 }
@@ -361,8 +363,8 @@ void TimeLineWidget::mouseMoveEvent( QMouseEvent* event )
 {
 	parentWidget()->update(); // essential for widgets that this timeline had taken their mouse move event from.
 	const TimePos t = getPositionFromX(event->x());
-	// Fine adjust when both ctrl and shift are held, hide ctrl+shift hint
-	bool unquantized = event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier);
+	// Fine adjust when ctrl is held, hide ctrl hint
+	bool unquantized = event->modifiers() & Qt::ControlModifier;
 	if (unquantized)
 	{
 		delete m_hint;
@@ -401,8 +403,13 @@ void TimeLineWidget::mouseMoveEvent( QMouseEvent* event )
 		}
 		case DragLoop:
 		{
-			if (unquantized) { m_loopPos[1] = t; }
-			else { m_loopPos[1] = t.quantize(m_snapSize); }
+			TimePos offset = (event->x() - m_initalXSelect) * TimePos::ticksPerBar() / m_ppb;
+			if (!unquantized) { offset = offset.quantize(m_snapSize); }
+			// Stop when left side hits 0
+			offset = std::max<TimePos>(offset, -m_oldLoopPos[0]);
+
+			m_loopPos[0] = m_oldLoopPos[0] + offset;
+			m_loopPos[1] = m_oldLoopPos[1] + offset;
 			update();
 			break;
 		}
@@ -442,8 +449,6 @@ void TimeLineWidget::mouseReleaseEvent( QMouseEvent* event )
 			break;
 	}
 
-	// Required when m_action == DragLoop, not harmful otherwise
-	if (m_loopPos[0] > m_loopPos[1]) { qSwap(m_loopPos[0], m_loopPos[1]); }
 	m_action = NoAction;
 }
 
@@ -478,6 +483,7 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 		else if (buttons & Qt::RightButton)
 		{
 			if (mods & Qt::ShiftModifier) { m_action = MoveLoopEnd; }
+			else { m_action = DragLoop; }
 		}
 	}
 	// If mouse has not moved
@@ -497,12 +503,12 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 	// Notify the user if they can disable quantization
 	bool unquantizable = m_action == MoveLoopBegin || m_action == MoveLoopEnd
 						|| m_action == DragLoop;
-	bool unquantized = mods == (Qt::ControlModifier | Qt::ShiftModifier);
+	bool unquantized = mods & Qt::ControlModifier;
 	if (unquantizable && !unquantized && type == QEvent::MouseMove)
 	{
 		delete m_hint;
 		m_hint = TextFloat::displayMessage(tr("Hint"),
-			tr("Hold <%1> and <Shift> to disable quantization.").arg(UI_CTRL_KEY),
+			tr("Hold <%1> to disable quantization.").arg(UI_CTRL_KEY),
 			embed::getIconPixmap("hint"), 0);
 	}
 }

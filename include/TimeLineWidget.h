@@ -184,6 +184,7 @@ public slots:
 	void toggleLoopPoints( int _n );
 	void toggleBehaviourAtStop( int _n );
 
+	// TODO updateSnapSize
 
 protected:
 	void paintEvent( QPaintEvent * _pe ) override;
@@ -227,6 +228,7 @@ private:
 	const TimePos & m_begin;
 	const Song::PlayModes m_mode;
 	TimePos m_loopPos[2];
+	TimePos m_oldLoopPos[2];
 
 	TimePos m_savedPos;
 
