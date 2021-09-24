@@ -335,8 +335,8 @@ void TimeLineWidget::mousePressEvent( QMouseEvent* event )
 	if (event->x() < m_xOffset || m_action != NoAction) { return; }
 	// Handles moving playhead
 	else if (button == Qt::LeftButton && mods == Qt::NoModifier) { m_action = MovePositionMarker; }
-	// Choose an action based on input event and user's bindings
-	else { chooseMouseAction(event); }
+	// Wait for drag or release
+	else { m_action = Thresholded; }
 
 	// Set initial position for actions that need it
 	m_initalXSelect = event->x();
@@ -464,13 +464,10 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 	// Shift + Ctrl modifier is reserved for fine adjustment of Shift actions
 	// TODO: Let MMB be bound
 
-	if (type == QEvent::MouseButtonPress)
-	{
-		// Wait for drag or release
-		m_action = Thresholded;
-	}
+	m_action = NoAction;
+
 	// If mouse has moved past threshold
-	else if (type == QEvent::MouseMove)
+	if (type == QEvent::MouseMove)
 	{
 		if (buttons & Qt::LeftButton)
 		{
