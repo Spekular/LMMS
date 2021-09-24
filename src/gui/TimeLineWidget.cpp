@@ -454,6 +454,11 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 	auto type = event->type();
 
 	// TODO: Read these from a config
+	auto leftCtrlAction = SelectSongTCO;
+	auto rightCtrlAction = MoveLoopClosest;
+	auto leftShiftAction = MoveLoopBegin;
+	auto rightShiftAction = MoveLoopEnd;
+
 	// Unmodified LMB is reserved for playhead, unmodified RMB for context menu
 	// Shift or Ctrl modified press behavior is bound by the user
 	// Shift + Ctrl modifier is reserved for fine adjustment of Shift actions
@@ -469,13 +474,13 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 	{
 		if (buttons & Qt::LeftButton)
 		{
-			if (mods & Qt::ShiftModifier) { m_action = MoveLoopBegin; }
-			else if (mods & Qt::ControlModifier) { m_action = SelectSongTCO; }
+			if (mods & Qt::ShiftModifier) { m_action = leftShiftAction; }
+			else if (mods & Qt::ControlModifier) { m_action = leftCtrlAction; }
 		}
 		else if (buttons & Qt::RightButton)
 		{
-			if (mods & Qt::ShiftModifier) { m_action = MoveLoopEnd; }
-			else if (mods & Qt::ControlModifier) { m_action = MoveLoopClosest; }
+			if (mods & Qt::ShiftModifier) { m_action = rightShiftAction; }
+			else if (mods & Qt::ControlModifier) { m_action = rightCtrlAction; }
 		}
 	}
 	// If mouse has not moved
@@ -483,12 +488,12 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 	{
 		if (buttons & Qt::LeftButton)
 		{
-			if (mods & Qt::ShiftModifier) { m_action = MoveLoopBegin; }
+			if (mods & Qt::ShiftModifier) { m_action = leftShiftAction; }
 		}
 		else if (buttons & Qt::RightButton)
 		{
-			if (mods & Qt::ShiftModifier) { m_action = MoveLoopEnd; }
-			else if (mods & Qt::ControlModifier) { m_action = MoveLoopClosest; }
+			if (mods & Qt::ShiftModifier) { m_action = rightShiftAction; }
+			else if (mods & Qt::ControlModifier) { m_action = rightCtrlAction; }
 			else { m_action = ShowContextMenu; }
 		}
 	}
