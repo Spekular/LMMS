@@ -184,7 +184,6 @@ public slots:
 	void toggleLoopPoints( int _n );
 	void toggleBehaviourAtStop( int _n );
 
-
 protected:
 	void paintEvent( QPaintEvent * _pe ) override;
 	void mousePressEvent( QMouseEvent * _me ) override;
@@ -222,11 +221,12 @@ private:
 	int m_xOffset;
 	int m_posMarkerX;
 	float m_ppb;
-	float m_snapSize;
+	float m_snapSize; // TODO: updateSnapSize()
 	Song::PlayPos & m_pos;
 	const TimePos & m_begin;
 	const Song::PlayModes m_mode;
 	TimePos m_loopPos[2];
+	TimePos m_oldLoopPos[2];
 
 	TimePos m_savedPos;
 

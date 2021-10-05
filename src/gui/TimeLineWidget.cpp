@@ -353,6 +353,8 @@ void TimeLineWidget::mousePressEvent( QMouseEvent* event )
 
 	// Set initial position for actions that need it
 	m_initalXSelect = event->x();
+	m_oldLoopPos[0] = m_loopPos[0];
+	m_oldLoopPos[1] = m_loopPos[1];
 
 	mouseMoveEvent(event);
 }
@@ -364,8 +366,8 @@ void TimeLineWidget::mouseMoveEvent( QMouseEvent* event )
 {
 	parentWidget()->update(); // essential for widgets that this timeline had taken their mouse move event from.
 	const TimePos t = getPositionFromX(event->x());
-	// Fine adjust when both ctrl and shift are held, hide ctrl+shift hint
-	bool unquantized = event->modifiers() == (Qt::ControlModifier | Qt::ShiftModifier);
+	// Fine adjust when ctrl is held, hide ctrl hint
+	bool unquantized = event->modifiers() & Qt::ControlModifier;
 	if (unquantized)
 	{
 		delete m_hint;
@@ -411,8 +413,13 @@ void TimeLineWidget::mouseMoveEvent( QMouseEvent* event )
 		}
 		case DragLoop:
 		{
-			if (unquantized) { m_loopPos[1] = t; }
-			else { m_loopPos[1] = t.quantize(m_snapSize); }
+			TimePos offset = (event->x() - m_initalXSelect) * TimePos::ticksPerBar() / m_ppb;
+			if (!unquantized) { offset = offset.quantize(m_snapSize); }
+			// Stop when left side hits 0
+			offset = std::max<TimePos>(offset, -m_oldLoopPos[0]);
+
+			m_loopPos[0] = m_oldLoopPos[0] + offset;
+			m_loopPos[1] = m_oldLoopPos[1] + offset;
 			update();
 			break;
 		}
@@ -433,8 +440,13 @@ void TimeLineWidget::mouseReleaseEvent( QMouseEvent* event )
 	delete m_hint;
 	m_hint = NULL;
 
-	// Change action if mouse has not moved
-	if (m_action == Thresholded) { chooseMouseAction(event); }
+	// If mouse has not moved since mouse press
+	if (m_action == Thresholded)
+	{
+		// Unmodified RMB reserved for context menu
+		if (event->button() == Qt::RightButton && event->modifiers() == Qt::NoModifier) { m_action = ShowContextMenu; }
+		else { chooseMouseAction(event); }
+	}
 
 	mouseMoveEvent(event);
 
@@ -452,8 +464,6 @@ void TimeLineWidget::mouseReleaseEvent( QMouseEvent* event )
 			break;
 	}
 
-	// Required when m_action == DragLoop, not harmful otherwise
-	if (m_loopPos[0] > m_loopPos[1]) { qSwap(m_loopPos[0], m_loopPos[1]); }
 	m_action = NoAction;
 }
 
@@ -464,59 +474,40 @@ void TimeLineWidget::chooseMouseAction(QMouseEvent* event)
 {
 	auto buttons = event->button() | event->buttons(); // include released button
 	auto mods = event->modifiers();
-	auto type = event->type();
 
 	// TODO: Read these from a config
+	auto rightAction = DragLoop;
 	auto leftCtrlAction = SelectSongTCO;
-	auto rightCtrlAction = NoAction;
 	auto leftShiftAction = MoveLoopBegin;
 	auto rightShiftAction = MoveLoopEnd;
 
-	// Unmodified LMB is reserved for playhead, unmodified RMB for context menu
+	// Unmodified LMB is reserved for playhead, unmodified RMB click for context menu
 	// Shift or Ctrl modified press behavior is bound by the user
-	// Shift + Ctrl modifier is reserved for fine adjustment of Shift actions
+	// Ctrl modifier is additionally used for fine adjustment, for actions that support it
 	// TODO: Let MMB be bound
 
 	m_action = NoAction;
 
-	// If mouse has moved past threshold
-	if (type == QEvent::MouseMove)
+	if (buttons & Qt::LeftButton)
 	{
-		if (buttons & Qt::LeftButton)
-		{
-			if (mods & Qt::ShiftModifier) { m_action = leftShiftAction; }
-			else if (mods & Qt::ControlModifier) { m_action = leftCtrlAction; }
-		}
-		else if (buttons & Qt::RightButton)
-		{
-			if (mods & Qt::ShiftModifier) { m_action = rightShiftAction; }
-			else if (mods & Qt::ControlModifier) { m_action = rightCtrlAction; }
-		}
+		if (mods & Qt::ShiftModifier) { m_action = leftShiftAction; }
+		else if (mods & Qt::ControlModifier) { m_action = leftCtrlAction; }
 	}
-	// If mouse has not moved
-	else if (type == QEvent::MouseButtonRelease)
+	else if (buttons & Qt::RightButton)
 	{
-		if (buttons & Qt::LeftButton)
-		{
-			if (mods & Qt::ShiftModifier) { m_action = leftShiftAction; }
-		}
-		else if (buttons & Qt::RightButton)
-		{
-			if (mods & Qt::ShiftModifier) { m_action = rightShiftAction; }
-			else if (mods & Qt::ControlModifier) { m_action = rightCtrlAction; }
-			else { m_action = ShowContextMenu; }
-		}
+		if (mods & Qt::ShiftModifier) { m_action = rightShiftAction; }
+		else { m_action = rightAction; }
 	}
 
 	// Notify the user if they can disable quantization
 	bool unquantizable = m_action == MoveLoopBegin || m_action == MoveLoopEnd
 						|| m_action == MoveLoopClosest || m_action == DragLoop;
-	bool unquantized = mods == (Qt::ControlModifier | Qt::ShiftModifier);
-	if (unquantizable && !unquantized && type == QEvent::MouseMove)
+	bool unquantized = mods & Qt::ControlModifier;
+	if (unquantizable && !unquantized && event->type() == QEvent::MouseMove)
 	{
 		delete m_hint;
 		m_hint = TextFloat::displayMessage(tr("Hint"),
-			tr("Hold <%1> and <Shift> to disable quantization.").arg(UI_CTRL_KEY),
+			tr("Hold <%1> to disable quantization.").arg(UI_CTRL_KEY),
 			embed::getIconPixmap("hint"), 0);
 	}
 }
